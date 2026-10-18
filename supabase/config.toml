@@ -1,0 +1,8 @@
+[project]
+id = "eon-panel-proveedor"
+
+[functions.panel-proxy]
+verify_jwt = true
+
+[functions.sync-all]
+verify_jwt = false
