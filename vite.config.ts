@@ -8,7 +8,7 @@ import { defineConfig } from 'vite'
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
-  base: '/eon-panel-proveedor/',
+  base: '/panelmenbresias/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

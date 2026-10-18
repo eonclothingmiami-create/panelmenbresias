@@ -1,5 +1,5 @@
 [project]
-id = "eon-panel-proveedor"
+id = "panelmenbresias"
 
 [functions.panel-proxy]
 verify_jwt = true

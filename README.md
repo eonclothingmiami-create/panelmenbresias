@@ -1,5 +1,8 @@
 # Panel de Proveedor (Eon)
 
+Repo GitHub: [`eonclothingmiami-create/panelmenbresias`](https://github.com/eonclothingmiami-create/panelmenbresias) (privado).  
+Pages: `https://eonclothingmiami-create.github.io/panelmenbresias/`
+
 Panel privado del desarrollador para controlar suscripciones de las apps vendidas a clientes.  
 Primera app conectada: **Sistema para la Confección** (Luis) vía su endpoint `vendor-sync`.
 
@@ -37,12 +40,12 @@ npm run build
 
 ```bash
 # Opción A — Dashboard: https://supabase.com/dashboard → New project
-#   Name: eon-panel-proveedor
+#   Name: panelmenbresias (o eon-panel-proveedor)
 #   Region: la más cercana (ej. us-east-1)
 #   Guarda el database password.
 
 # Opción B — CLI (requiere login previo: supabase login)
-supabase projects create eon-panel-proveedor --org-id <TU_ORG_ID> --db-password <PASSWORD> --region us-east-1
+supabase projects create panelmenbresias --org-id <TU_ORG_ID> --db-password <PASSWORD> --region us-east-1
 ```
 
 Anota el **project ref** (`<PANEL_REF>`) y las keys:
@@ -104,16 +107,16 @@ En el front: login → enrolar TOTP → verificar (AAL2 obligatorio).
 # Secret de Luis (mismo valor que VENDOR_SYNC_SECRET en la app del cliente)
 supabase secrets set APP_SECRET_LUIS_CONFECCION=<VENDOR_SYNC_SECRET_DE_LUIS> --project-ref <PANEL_REF>
 
-# Origen permitido del panel (GitHub Pages)
-supabase secrets set PANEL_ORIGIN=https://<GITHUB_USER>.github.io --project-ref <PANEL_REF>
+# Origen permitido del panel (GitHub Pages origin — sin path)
+supabase secrets set PANEL_ORIGIN=https://eonclothingmiami-create.github.io --project-ref <PANEL_REF>
 
 # Secret para sync-all / pg_cron
 supabase secrets set CRON_SECRET=$(openssl rand -hex 32) --project-ref <PANEL_REF>
 ```
 
-Si el Pages URL incluye el path del repo, usa el origin sin path:
+`PANEL_ORIGIN` es el **origin** (scheme + host), no la ruta del repo. La app vive en:
 
-`https://eonclothingmiami-create.github.io`
+`https://eonclothingmiami-create.github.io/panelmenbresias/`
 
 ## 5) Desplegar Edge Functions
 
@@ -146,9 +149,9 @@ select cron.schedule(
 1. Settings → Pages → Source: **GitHub Actions**
 2. Repo secrets: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 3. Push a `main` dispara `.github/workflows/deploy.yml`
-4. URL: `https://<user>.github.io/eon-panel-proveedor/`
+4. URL: `https://eonclothingmiami-create.github.io/panelmenbresias/`
 
-Vite `base` = `/eon-panel-proveedor/` · router = `HashRouter`.
+Vite `base` = `/panelmenbresias/` · router = `HashRouter`.
 
 ## Contrato Luis (solo consumo)
 
