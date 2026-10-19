@@ -41,6 +41,19 @@ describe('mapAppToSemaphore', () => {
     ).toBe('in_grace')
   })
 
+  it('no marca in_grace si status es active aunque haya grace_until potencial', () => {
+    expect(
+      mapAppToSemaphore({
+        cached_status: 'active',
+        cached_effective_status: 'active',
+        cached_days_left: 19,
+        cached_grace_until: '2026-11-09',
+        last_check_ok: true,
+        last_check_at: '2026-10-19T00:00:00Z',
+      }),
+    ).toBe('active')
+  })
+
   it('marca suspended', () => {
     expect(
       mapAppToSemaphore({

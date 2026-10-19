@@ -10,7 +10,7 @@ export function useApps() {
     queryFn: async (): Promise<AppWithClient[]> => {
       const { data, error } = await supabase
         .from('apps')
-        .select('*, clients(id, nombre, contacto, telefono)')
+        .select('*, clients(id, nombre, contacto, telefono, desarrollado_por)')
         .order('nombre')
       if (error) throw error
       return (data ?? []) as AppWithClient[]
@@ -25,7 +25,7 @@ export function useApp(appId: string | undefined) {
     queryFn: async (): Promise<AppWithClient> => {
       const { data, error } = await supabase
         .from('apps')
-        .select('*, clients(id, nombre, contacto, telefono)')
+        .select('*, clients(id, nombre, contacto, telefono, desarrollado_por)')
         .eq('id', appId!)
         .single()
       if (error) throw error

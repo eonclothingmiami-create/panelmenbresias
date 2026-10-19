@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
+import { desarrolladorLabel } from '@/lib/desarrolladores'
 import { formatBogotaDateTime, formatCop, formatDateOnly } from '@/lib/format'
 import { mapAppToSemaphore, semaphoreLabel, semaphoreTone } from '@/lib/semaphore'
 import { cn } from '@/lib/utils'
@@ -25,7 +26,8 @@ export function AppCard({ app }: { app: AppWithClient }) {
         <div>
           <h2 className="font-heading text-lg leading-tight">{app.nombre}</h2>
           <p className="text-sm text-muted-foreground">
-            {app.clients?.nombre ?? 'Sin cliente'} · {app.slug}
+            {app.clients?.nombre ?? 'Sin cliente'} · {app.slug} ·{' '}
+            {desarrolladorLabel(app.desarrollado_por)}
           </p>
         </div>
         <Badge variant="outline" className={cn('shrink-0', toneClass[tone])}>

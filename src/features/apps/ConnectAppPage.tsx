@@ -17,6 +17,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  DESARROLLADOR_OPTIONS,
+  type Desarrollador,
+} from '@/lib/desarrolladores'
 import { testConnection } from '@/lib/panel-api'
 import { supabase } from '@/lib/supabase'
 import type { Client, VendorSyncState } from '@/types/database'
@@ -35,6 +39,7 @@ const schema = z.object({
   url_publica: z.string().optional(),
   precio_mensual_cop: z.number().int().nonnegative(),
   dia_vencimiento: z.number().int().min(1).max(31),
+  desarrollado_por: z.enum(['david', 'santiago', 'ambos']),
   notas_cliente: z.string().optional(),
 })
 
@@ -72,6 +77,7 @@ export function ConnectAppPage() {
       url_publica: '',
       precio_mensual_cop: 0,
       dia_vencimiento: 1,
+      desarrollado_por: 'ambos',
     },
   })
 
@@ -114,6 +120,7 @@ export function ConnectAppPage() {
         tenant_id: values.tenant_id,
         precio_mensual_cop: values.precio_mensual_cop,
         dia_vencimiento: values.dia_vencimiento,
+        desarrollado_por: values.desarrollado_por,
         activa_en_panel: true,
         panel_version: probe?.panel_version ?? 0,
         cached_status: probe?.status ?? null,
@@ -240,6 +247,33 @@ export function ConnectAppPage() {
                   />
                 </Field>
               </div>
+
+              <Field data-invalid={!!form.formState.errors.desarrollado_por || undefined}>
+                <FieldLabel>Desarrollado por</FieldLabel>
+                <Select
+                  value={form.watch('desarrollado_por')}
+                  onValueChange={(v) =>
+                    form.setValue('desarrollado_por', (v ?? 'ambos') as Desarrollador, {
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="David, Santiago o ambos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DESARROLLADOR_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldDescription>
+                  Quién desarrolló esta app para gestionar cobros y responsabilidad.
+                </FieldDescription>
+                <FieldError>{form.formState.errors.desarrollado_por?.message}</FieldError>
+              </Field>
 
               <Field>
                 <FieldLabel htmlFor="url_publica">URL pública (opcional)</FieldLabel>

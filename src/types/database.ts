@@ -6,6 +6,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type Desarrollador = 'david' | 'santiago' | 'ambos'
+
 export type SubscriptionStatus =
   | 'active'
   | 'past_due'
@@ -46,6 +48,7 @@ export interface Database {
           contacto: string | null
           telefono: string | null
           notas: string | null
+          desarrollado_por: Desarrollador
           created_at: string
           updated_at: string
         }
@@ -55,6 +58,7 @@ export interface Database {
           contacto?: string | null
           telefono?: string | null
           notas?: string | null
+          desarrollado_por?: Desarrollador
           created_at?: string
           updated_at?: string
         }
@@ -64,6 +68,7 @@ export interface Database {
           contacto?: string | null
           telefono?: string | null
           notas?: string | null
+          desarrollado_por?: Desarrollador
           created_at?: string
           updated_at?: string
         }
@@ -81,6 +86,7 @@ export interface Database {
           tenant_id: string
           precio_mensual_cop: number
           dia_vencimiento: number
+          desarrollado_por: Desarrollador
           activa_en_panel: boolean
           panel_version: number
           cached_status: string | null
@@ -110,6 +116,7 @@ export interface Database {
           tenant_id: string
           precio_mensual_cop: number
           dia_vencimiento: number
+          desarrollado_por?: Desarrollador
           activa_en_panel?: boolean
           panel_version?: number
           cached_status?: string | null
@@ -217,7 +224,7 @@ export type Payment = Database['public']['Tables']['payments']['Row']
 export type AuditLog = Database['public']['Tables']['audit_log']['Row']
 
 export type AppWithClient = App & {
-  clients: Pick<Client, 'id' | 'nombre' | 'contacto' | 'telefono'> | null
+  clients: Pick<Client, 'id' | 'nombre' | 'contacto' | 'telefono' | 'desarrollado_por'> | null
 }
 
 export interface VendorSyncState {

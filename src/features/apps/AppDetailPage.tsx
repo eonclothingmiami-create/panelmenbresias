@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { desarrolladorLabel } from '@/lib/desarrolladores'
 import { formatBogotaDateTime, formatCop, formatDateOnly } from '@/lib/format'
 import { mapAppToSemaphore, semaphoreLabel } from '@/lib/semaphore'
 import { supabase } from '@/lib/supabase'
@@ -77,9 +78,14 @@ export function AppDetailPage() {
           <p className="text-sm text-muted-foreground">
             {app.clients?.nombre} · {app.slug} · tenant {app.tenant_id}
           </p>
-          <Badge variant="outline" className="w-fit">
-            {semaphoreLabel(state)}
-          </Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="w-fit">
+              {semaphoreLabel(state)}
+            </Badge>
+            <Badge variant="secondary" className="w-fit">
+              Dev: {desarrolladorLabel(app.desarrollado_por)}
+            </Badge>
+          </div>
         </div>
         <Button
           type="button"
@@ -109,7 +115,14 @@ export function AppDetailPage() {
         <Meta label="Estado remoto" value={app.cached_status ?? '—'} />
         <Meta label="Effective" value={app.cached_effective_status ?? '—'} />
         <Meta label="Periodo hasta" value={formatDateOnly(app.cached_current_period_end)} />
-        <Meta label="Grace until" value={formatDateOnly(app.cached_grace_until)} />
+        <Meta
+          label={
+            (app.cached_effective_status ?? app.cached_status) === 'past_due'
+              ? 'En gracia hasta'
+              : 'Gracia potencial hasta'
+          }
+          value={formatDateOnly(app.cached_grace_until)}
+        />
         <Meta
           label="Días restantes"
           value={typeof app.cached_days_left === 'number' ? String(app.cached_days_left) : '—'}

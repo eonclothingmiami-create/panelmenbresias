@@ -18,7 +18,9 @@ export function mapAppToSemaphore(app: SemaphoreInput): SemaphoreState {
 
   if (status === 'suspended') return 'suspended'
   if (status === 'cancelled') return 'cancelled'
-  if (status === 'past_due' || app.cached_grace_until) return 'in_grace'
+  // Solo "en gracia" con status past_due. Un grace_until futuro con status
+  // active es ventana potencial tras el vencimiento, no gracia activa.
+  if (status === 'past_due') return 'in_grace'
 
   if (status === 'active') {
     const days = app.cached_days_left

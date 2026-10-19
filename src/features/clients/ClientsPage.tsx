@@ -14,6 +14,13 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
@@ -24,6 +31,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  DESARROLLADOR_OPTIONS,
+  desarrolladorLabel,
+  type Desarrollador,
+} from '@/lib/desarrolladores'
 import { supabase } from '@/lib/supabase'
 import type { Client } from '@/types/database'
 
@@ -32,6 +44,7 @@ const schema = z.object({
   contacto: z.string().optional(),
   telefono: z.string().optional(),
   notas: z.string().optional(),
+  desarrollado_por: z.enum(['david', 'santiago', 'ambos']),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -52,16 +65,29 @@ export function ClientsPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { nombre: '', contacto: '', telefono: '', notas: '' },
+    defaultValues: {
+      nombre: '',
+      contacto: '',
+      telefono: '',
+      notas: '',
+      desarrollado_por: 'ambos',
+    },
   })
 
   const save = useMutation({
     mutationFn: async (values: FormValues) => {
+      const payload = {
+        nombre: values.nombre,
+        contacto: values.contacto || null,
+        telefono: values.telefono || null,
+        notas: values.notas || null,
+        desarrollado_por: values.desarrollado_por,
+      }
       if (editing) {
-        const { error } = await supabase.from('clients').update(values).eq('id', editing.id)
+        const { error } = await supabase.from('clients').update(payload).eq('id', editing.id)
         if (error) throw error
       } else {
-        const { error } = await supabase.from('clients').insert(values)
+        const { error } = await supabase.from('clients').insert(payload)
         if (error) throw error
       }
     },
@@ -89,7 +115,13 @@ export function ClientsPage() {
 
   function openCreate() {
     setEditing(null)
-    form.reset({ nombre: '', contacto: '', telefono: '', notas: '' })
+    form.reset({
+      nombre: '',
+      contacto: '',
+      telefono: '',
+      notas: '',
+      desarrollado_por: 'ambos',
+    })
     setOpen(true)
   }
 
@@ -100,6 +132,7 @@ export function ClientsPage() {
       contacto: c.contacto ?? '',
       telefono: c.telefono ?? '',
       notas: c.notas ?? '',
+      desarrollado_por: (c.desarrollado_por ?? 'ambos') as Desarrollador,
     })
     setOpen(true)
   }
@@ -109,7 +142,9 @@ export function ClientsPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="font-heading text-2xl">Clientes</h2>
-          <p className="text-sm text-muted-foreground">CRUD simple de clientes del panel.</p>
+          <p className="text-sm text-muted-foreground">
+            CRUD de clientes y quién los desarrolló (David, Santiago o ambos).
+          </p>
         </div>
         <Button type="button" onClick={openCreate}>
           Nuevo cliente
@@ -123,6 +158,7 @@ export function ClientsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
+              <TableHead>Desarrollador</TableHead>
               <TableHead>Contacto</TableHead>
               <TableHead>Tel / WhatsApp</TableHead>
               <TableHead></TableHead>
@@ -132,6 +168,7 @@ export function ClientsPage() {
             {(clients.data ?? []).map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.nombre}</TableCell>
+                <TableCell>{desarrolladorLabel(c.desarrollado_por)}</TableCell>
                 <TableCell>{c.contacto ?? '—'}</TableCell>
                 <TableCell>{c.telefono ?? '—'}</TableCell>
                 <TableCell className="text-right">
@@ -168,6 +205,28 @@ export function ClientsPage() {
               <Field>
                 <FieldLabel htmlFor="c-nombre">Nombre</FieldLabel>
                 <Input id="c-nombre" {...form.register('nombre')} />
+              </Field>
+              <Field>
+                <FieldLabel>Desarrollado por</FieldLabel>
+                <Select
+                  value={form.watch('desarrollado_por')}
+                  onValueChange={(v) =>
+                    form.setValue('desarrollado_por', (v ?? 'ambos') as Desarrollador, {
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Elige desarrollador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DESARROLLADOR_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
               <Field>
                 <FieldLabel htmlFor="c-contacto">Contacto</FieldLabel>
