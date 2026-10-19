@@ -6,3 +6,24 @@ verify_jwt = true
 
 [functions.sync-all]
 verify_jwt = false
+
+[auth]
+enable_signup = false
+additional_redirect_urls = []
+site_url = "http://localhost:3000"
+
+[auth.email]
+enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[storage.vector]
+enabled = false

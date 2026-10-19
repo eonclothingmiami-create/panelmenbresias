@@ -80,7 +80,8 @@ Migraciones en `supabase/migrations/`:
 En Authentication → Providers:
 
 - Email/password **ON**
-- **Disable signup** (o deshabilitar “Allow new users to sign up”)
+- **Disable signup** (o deshabilitar “Allow new users to sign up”)  
+  En este proyecto: `auth.enable_signup = false` vía `supabase config push`.
 
 Crea el usuario (dashboard o Admin API) con correo:
 

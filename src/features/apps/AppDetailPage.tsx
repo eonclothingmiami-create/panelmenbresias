@@ -19,6 +19,7 @@ import { mapAppToSemaphore, semaphoreLabel } from '@/lib/semaphore'
 import { supabase } from '@/lib/supabase'
 import type { AuditLog, Payment } from '@/types/database'
 import { AppActions } from './AppActions'
+import { AppBillingEditor } from './AppBillingEditor'
 import { useApp, useSyncOne } from './useApps'
 
 export function AppDetailPage() {
@@ -147,6 +148,8 @@ export function AppDetailPage() {
           <AlertDescription>{app.last_check_error ?? 'error'}</AlertDescription>
         </Alert>
       ) : null}
+
+      <AppBillingEditor app={app} />
 
       <AppActions app={app} />
 

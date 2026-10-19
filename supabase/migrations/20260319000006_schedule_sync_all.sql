@@ -1,0 +1,21 @@
+-- Cron horario sync-all (panel de apps).
+-- En producción ya quedó programado como job `panel-sync-all-hourly` (0 * * * *).
+-- El bearer usa el Edge secret CRON_SECRET (no se guarda en git).
+--
+-- Para recrear en otro proyecto:
+--   select cron.schedule(
+--     'panel-sync-all-hourly',
+--     '0 * * * *',
+--     $$
+--     select net.http_post(
+--       url := 'https://<REF>.supabase.co/functions/v1/sync-all',
+--       headers := jsonb_build_object(
+--         'Content-Type', 'application/json',
+--         'Authorization', 'Bearer <CRON_SECRET>'
+--       ),
+--       body := '{}'::jsonb
+--     );
+--     $$
+--   );
+
+select 1;
