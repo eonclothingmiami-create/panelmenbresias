@@ -1,17 +1,30 @@
+import { useMemo, useState } from 'react'
 import { RefreshCwIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import {
+  DESARROLLADOR_FILTER_OPTIONS,
+  type DesarrolladorFilter,
+} from '@/lib/desarrolladores'
 import { formatCop } from '@/lib/format'
 import { isDueThisWeek, mapAppToSemaphore } from '@/lib/semaphore'
+import { cn } from '@/lib/utils'
 import { AppCard } from './AppCard'
 import { useApps, useSyncAll } from './useApps'
 
 export function DashboardPage() {
   const { data: apps, isLoading, error } = useApps()
   const syncAll = useSyncAll()
+  const [devFilter, setDevFilter] = useState<DesarrolladorFilter>('todos')
 
-  const activeApps = apps?.filter((a) => a.activa_en_panel) ?? []
+  const filteredApps = useMemo(() => {
+    if (!apps?.length) return []
+    if (devFilter === 'todos') return apps
+    return apps.filter((a) => a.desarrollado_por === devFilter)
+  }, [apps, devFilter])
+
+  const activeApps = filteredApps.filter((a) => a.activa_en_panel)
   // Total facturable: excluye suspendidas/canceladas (aunque sigan en el panel)
   const billableApps = activeApps.filter((a) => {
     const status = (a.cached_effective_status ?? a.cached_status ?? '').toLowerCase()
@@ -20,6 +33,9 @@ export function DashboardPage() {
   const monthlyTotal = billableApps.reduce((sum, a) => sum + a.precio_mensual_cop, 0)
   const dueThisWeek = billableApps.filter(isDueThisWeek)
   const offline = activeApps.filter((a) => mapAppToSemaphore(a) === 'offline')
+
+  // Sync all active apps in the panel (not only the filtered view)
+  const syncTargets = (apps ?? []).filter((a) => a.activa_en_panel)
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,8 +48,8 @@ export function DashboardPage() {
         </div>
         <Button
           type="button"
-          onClick={() => syncAll.mutate(activeApps)}
-          disabled={syncAll.isPending || activeApps.length === 0}
+          onClick={() => syncAll.mutate(syncTargets)}
+          disabled={syncAll.isPending || syncTargets.length === 0}
         >
           <RefreshCwIcon
             data-icon="inline-start"
@@ -41,6 +57,29 @@ export function DashboardPage() {
           />
           Sincronizar todo
         </Button>
+      </div>
+
+      <div
+        role="group"
+        aria-label="Filtrar por desarrollador"
+        className="flex flex-wrap gap-1.5"
+      >
+        {DESARROLLADOR_FILTER_OPTIONS.map((opt) => {
+          const selected = devFilter === opt.value
+          return (
+            <Button
+              key={opt.value}
+              type="button"
+              size="sm"
+              variant={selected ? 'default' : 'outline'}
+              aria-pressed={selected}
+              className={cn('min-w-[4.5rem]', !selected && 'bg-card/60')}
+              onClick={() => setDevFilter(opt.value)}
+            >
+              {opt.label}
+            </Button>
+          )
+        })}
       </div>
 
       <section className="grid gap-3 sm:grid-cols-3">
@@ -65,9 +104,18 @@ export function DashboardPage() {
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
+      ) : filteredApps.length === 0 ? (
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyTitle>Sin apps para este filtro</EmptyTitle>
+            <EmptyDescription>
+              Prueba otro desarrollador o vuelve a Todos.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {apps.map((app) => (
+          {filteredApps.map((app) => (
             <AppCard key={app.id} app={app} />
           ))}
         </div>
