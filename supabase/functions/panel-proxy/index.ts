@@ -60,11 +60,6 @@ Deno.serve(async (req) => {
       return json({ ok: false, code: 'unauthorized' }, 401, headers)
     }
 
-    const aal = await getAal(authHeader)
-    if (aal !== 'aal2') {
-      return json({ ok: false, code: 'mfa_required' }, 403, headers)
-    }
-
     const service = createServiceClient()
     const { data: owner } = await service
       .from('owners')
@@ -255,18 +250,6 @@ async function handleApply(opts: {
     .eq('id', appId)
 
   return json({ ok: true }, 200, headers)
-}
-
-async function getAal(authHeader: string): Promise<string | null> {
-  const token = authHeader.replace(/^Bearer\s+/i, '')
-  const parts = token.split('.')
-  if (parts.length < 2) return null
-  try {
-    const payload = JSON.parse(atob(parts[1]!.replace(/-/g, '+').replace(/_/g, '/')))
-    return (payload.aal as string) ?? null
-  } catch {
-    return null
-  }
 }
 
 async function markCheckError(

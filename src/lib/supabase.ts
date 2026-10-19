@@ -32,6 +32,8 @@ const url =
 
 const anonKey = fromEnvAnon.length > 20 ? fromEnvAnon : PANEL_ANON
 
+export const panelAnonKey = anonKey
+
 export const isSupabaseConfigured = Boolean(
   url.startsWith('https://') && anonKey.length > 20,
 )

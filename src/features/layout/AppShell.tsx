@@ -13,7 +13,7 @@ const links = [
 ]
 
 export function AppShell() {
-  const { user, signOut, isOwner, aal } = useAuth()
+  const { user, signOut, isOwner } = useAuth()
 
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-4 px-4 py-4 md:px-6">
@@ -28,9 +28,7 @@ export function AppShell() {
           <ThemeToggle />
           <div className="hidden text-right text-xs text-muted-foreground sm:block">
             <div>{user?.email}</div>
-            <div>
-              {aal?.toUpperCase() ?? '—'} · {isOwner ? 'owner' : 'sin owner'}
-            </div>
+            <div>{isOwner ? 'owner' : 'sin owner'}</div>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={() => void signOut()}>
             <LogOutIcon data-icon="inline-start" />

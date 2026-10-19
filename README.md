@@ -10,7 +10,7 @@ Stack: React 19 · Vite · TypeScript estricto · Tailwind 4 · shadcn/ui · Tan
 
 ## Seguridad
 
-GitHub Pages es estático: **ningún secreto HMAC llega al navegador**. El front solo habla con la Edge Function `panel-proxy` usando tu sesión Supabase (JWT + owner + AAL2). Esa función firma y llama a cada `vendor-sync`. Los secretos viven como secrets de Edge Functions: `APP_SECRET_<SLUG_EN_MAYUSCULAS>`.
+GitHub Pages es estático: **ningún secreto HMAC llega al navegador**. El front solo habla con la Edge Function `panel-proxy` usando tu sesión Supabase (JWT + owner). Esa función firma y llama a cada `vendor-sync`. Los secretos viven como secrets de Edge Functions: `APP_SECRET_<SLUG_EN_MAYUSCULAS>`.
 
 ## Requisitos locales
 
@@ -75,7 +75,7 @@ Migraciones en `supabase/migrations/`:
 2. `20260318000002_rls.sql` — RLS solo owners
 3. `20260318000003_cron_sync.sql` — pg_cron (schedule comentado)
 
-## 3) Crear usuario owner + MFA
+## 3) Crear usuario owner
 
 En Authentication → Providers:
 
@@ -97,7 +97,7 @@ on conflict (user_id) do nothing;
 
 (Ver también `supabase/seed/owner_marker.sql`.)
 
-En el front: login → enrolar TOTP → verificar (AAL2 obligatorio).
+En el front: login con email/password (sin MFA).
 
 ## 4) Secrets de Edge Functions
 

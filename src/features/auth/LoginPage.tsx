@@ -45,7 +45,7 @@ export function LoginPage() {
           </p>
           <CardTitle className="font-heading text-3xl">Panel de Proveedor</CardTitle>
           <CardDescription>
-            Acceso exclusivo del desarrollador. Signup deshabilitado. MFA TOTP obligatorio.
+            Acceso exclusivo del desarrollador. Signup deshabilitado.
           </CardDescription>
         </CardHeader>
         <CardContent>

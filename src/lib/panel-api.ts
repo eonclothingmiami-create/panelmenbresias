@@ -1,4 +1,4 @@
-import { panelProxyUrl, supabase } from '@/lib/supabase'
+import { panelAnonKey, panelProxyUrl, supabase } from '@/lib/supabase'
 import type { PanelProxyResponse, VendorSyncState } from '@/types/database'
 
 async function authHeader(): Promise<string> {
@@ -15,7 +15,7 @@ export async function callPanelProxy(
     method: 'POST',
     headers: {
       Authorization: await authHeader(),
-      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+      apikey: panelAnonKey,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
