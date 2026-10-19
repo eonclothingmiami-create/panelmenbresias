@@ -26,10 +26,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx tsc --noEmit -p tsconfig.app.json
+      # Use committed .env.production (panel de apps). Do NOT inject empty
+      # GitHub secrets here — blank secrets override .env and break the client.
       - name: Build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v5
