@@ -10,7 +10,7 @@ export function useApps() {
   return useQuery({
     queryKey: ['apps'],
     enabled: gate === 'ready' && isOwner,
-    staleTime: 30_000,
+    staleTime: 5_000,
     queryFn: async (): Promise<AppWithClient[]> => {
       const { data, error } = await supabase
         .from('apps')
@@ -27,7 +27,7 @@ export function useApp(appId: string | undefined) {
   return useQuery({
     queryKey: ['apps', appId],
     enabled: gate === 'ready' && isOwner && Boolean(appId),
-    staleTime: 30_000,
+    staleTime: 5_000,
     queryFn: async (): Promise<AppWithClient> => {
       const { data, error } = await supabase
         .from('apps')

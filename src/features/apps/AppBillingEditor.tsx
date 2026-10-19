@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,7 @@ import {
 } from '@/lib/desarrolladores'
 import { formatMilesCop, parseMontoCop } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
-import type { App } from '@/types/database'
+import type { App, AppWithClient } from '@/types/database'
 
 export function AppBillingEditor({ app }: { app: App }) {
   const qc = useQueryClient()
@@ -29,33 +29,75 @@ export function AppBillingEditor({ app }: { app: App }) {
   const [dia, setDia] = useState(String(app.dia_vencimiento))
   const [dev, setDev] = useState<Desarrollador>(app.desarrollado_por ?? 'ambos')
 
+  useEffect(() => {
+    setPrecioText(app.precio_mensual_cop > 0 ? formatMilesCop(app.precio_mensual_cop) : '')
+    setDia(String(app.dia_vencimiento))
+    setDev(app.desarrollado_por ?? 'ambos')
+  }, [app.id, app.precio_mensual_cop, app.dia_vencimiento, app.desarrollado_por])
+
   const save = useMutation({
     mutationFn: async () => {
-      const precio = parseMontoCop(precioText)
-      if (precio == null) {
-        throw new Error('Precio inválido: usa un entero > 0 (ej. 150.000)')
+      let precio: number
+      if (!precioText.trim()) {
+        precio = app.precio_mensual_cop
+      } else {
+        const parsed = parseMontoCop(precioText)
+        if (parsed == null) {
+          throw new Error('Precio inválido: usa un entero > 0 (ej. 150.000)')
+        }
+        precio = parsed
       }
       const diaNum = Number(dia)
       if (!Number.isInteger(diaNum) || diaNum < 1 || diaNum > 31) {
         throw new Error('Día de cobro debe estar entre 1 y 31')
       }
-      const { error } = await supabase
+      const patch = {
+        precio_mensual_cop: precio,
+        dia_vencimiento: diaNum,
+        desarrollado_por: dev,
+      }
+      const { data, error } = await supabase
         .from('apps')
-        .update({
-          precio_mensual_cop: precio,
-          dia_vencimiento: diaNum,
-          desarrollado_por: dev,
-        })
+        .update(patch)
         .eq('id', app.id)
+        .select('id, precio_mensual_cop, dia_vencimiento, desarrollado_por')
+        .single()
       if (error) throw error
-      return { precio, diaNum }
+      return data
     },
-    onSuccess: ({ precio }) => {
-      setPrecioText(formatMilesCop(precio))
+    onSuccess: (data) => {
+      if (data.precio_mensual_cop > 0) {
+        setPrecioText(formatMilesCop(data.precio_mensual_cop))
+      }
+      setDia(String(data.dia_vencimiento))
+      setDev(data.desarrollado_por)
       setPrecioError(null)
-      toast.success('Datos de cobro guardados')
+      toast.success('Cobro actualizado · el dashboard ya refleja el desarrollador')
+
+      // Actualiza caché al instante (dashboard + detalle)
+      qc.setQueryData<AppWithClient[]>(['apps'], (old) =>
+        old?.map((a) =>
+          a.id === app.id
+            ? {
+                ...a,
+                precio_mensual_cop: data.precio_mensual_cop,
+                dia_vencimiento: data.dia_vencimiento,
+                desarrollado_por: data.desarrollado_por,
+              }
+            : a,
+        ),
+      )
+      qc.setQueryData<AppWithClient>(['apps', app.id], (old) =>
+        old
+          ? {
+              ...old,
+              precio_mensual_cop: data.precio_mensual_cop,
+              dia_vencimiento: data.dia_vencimiento,
+              desarrollado_por: data.desarrollado_por,
+            }
+          : old,
+      )
       void qc.invalidateQueries({ queryKey: ['apps'] })
-      void qc.invalidateQueries({ queryKey: ['apps', app.id] })
     },
     onError: (err: Error) => {
       setPrecioError(err.message)
@@ -68,8 +110,8 @@ export function AppBillingEditor({ app }: { app: App }) {
       <div>
         <h3 className="font-heading text-lg">Cobro</h3>
         <p className="text-sm text-muted-foreground">
-          Precio y día editables. Hoy: {formatMilesCop(app.precio_mensual_cop)} COP · día{' '}
-          {app.dia_vencimiento} · {desarrolladorLabel(app.desarrollado_por)}
+          Precio, día y desarrollador. Al guardar, el dashboard muestra{' '}
+          <strong>{desarrolladorLabel(dev)}</strong>.
         </p>
       </div>
       <FieldGroup>
@@ -90,7 +132,7 @@ export function AppBillingEditor({ app }: { app: App }) {
                 if (n != null) setPrecioText(formatMilesCop(n))
               }}
             />
-            <FieldDescription>Sin default oculto. Entero &gt; 0.</FieldDescription>
+            <FieldDescription>Vacío = dejar el precio actual.</FieldDescription>
             <FieldError>{precioError}</FieldError>
           </Field>
           <Field>
@@ -108,7 +150,7 @@ export function AppBillingEditor({ app }: { app: App }) {
             <FieldLabel>Desarrollado por</FieldLabel>
             <Select value={dev} onValueChange={(v) => setDev((v ?? 'ambos') as Desarrollador)}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder="David, Santiago o Ambos" />
               </SelectTrigger>
               <SelectContent>
                 {DESARROLLADOR_OPTIONS.map((opt) => (

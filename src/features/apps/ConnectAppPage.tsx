@@ -239,6 +239,7 @@ export function ConnectAppPage() {
       return
     }
     toast.success('App conectada')
+    await qc.invalidateQueries({ queryKey: ['apps'] })
     navigate(`/apps/${data.id}`)
   }
 

@@ -26,13 +26,15 @@ export function AppCard({ app }: { app: AppWithClient }) {
         <div>
           <h2 className="font-heading text-lg leading-tight">{app.nombre}</h2>
           <p className="text-sm text-muted-foreground">
-            {app.clients?.nombre ?? 'Sin cliente'} · {app.slug} ·{' '}
-            {desarrolladorLabel(app.desarrollado_por)}
+            {app.clients?.nombre ?? 'Sin cliente'} · {app.slug}
           </p>
         </div>
-        <Badge variant="outline" className={cn('shrink-0', toneClass[tone])}>
-          {semaphoreLabel(state)}
-        </Badge>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Badge variant="outline" className={cn(toneClass[tone])}>
+            {semaphoreLabel(state)}
+          </Badge>
+          <Badge variant="secondary">Dev: {desarrolladorLabel(app.desarrollado_por)}</Badge>
+        </div>
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
