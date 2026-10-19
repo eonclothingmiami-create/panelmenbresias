@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addMonthsKeepingDueDay, nextDueDate } from './period'
+import { addMonthsKeepingDueDay, nextDueDate, renewPeriodEnd } from './period'
 
 describe('nextDueDate', () => {
   it('avanza al próximo mes si ya pasó el día de vencimiento', () => {
@@ -30,5 +30,20 @@ describe('addMonthsKeepingDueDay', () => {
 
   it('suma varios meses', () => {
     expect(addMonthsKeepingDueDay('2026-01-15', 15, 3)).toBe('2026-04-15')
+  })
+})
+
+describe('renewPeriodEnd', () => {
+  it('si el periodo ya venció, cuenta desde hoy (no desde el vencimiento viejo)', () => {
+    // venció 10 ene; paga el 18 oct → próximo 10 nov
+    expect(renewPeriodEnd('2026-01-10', 10, '2026-10-18')).toBe('2026-11-10')
+  })
+
+  it('si aún está dentro del periodo, avanza un mes desde el vencimiento', () => {
+    expect(renewPeriodEnd('2026-11-06', 6, '2026-10-18')).toBe('2026-12-06')
+  })
+
+  it('si paga el mismo día del vencimiento, avanza un mes', () => {
+    expect(renewPeriodEnd('2026-11-06', 6, '2026-11-06')).toBe('2026-12-06')
   })
 })

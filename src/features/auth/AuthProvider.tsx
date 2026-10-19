@@ -50,11 +50,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const { data: ownerRow } = await supabase
+    // Timeout para no dejar el UI en loading eterno si RLS/red fallan
+    const ownersQuery = supabase
       .from('owners')
       .select('user_id')
       .eq('user_id', nextSession.user.id)
       .maybeSingle()
+
+    const timeout = new Promise<{ data: null; error: { message: string } }>((resolve) => {
+      setTimeout(() => resolve({ data: null, error: { message: 'timeout owners' } }), 12_000)
+    })
+
+    const { data: ownerRow, error } = await Promise.race([ownersQuery, timeout])
+    if (error && error.message !== 'timeout owners') {
+      console.error('owners check', error)
+    }
 
     setIsOwner(Boolean(ownerRow))
     setGate('ready')
@@ -69,20 +79,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) return
 
     void refreshAuth()
+
+    // IMPORTANTE: no await supabase.from() dentro del callback síncrono de
+    // onAuthStateChange — bloquea el cliente auth (deadlock). Diferir.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
-      void evaluate(next)
+      queueMicrotask(() => {
+        void evaluate(next)
+      })
     })
     return () => sub.subscription.unsubscribe()
   }, [evaluate, refreshAuth])
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
-  }, [])
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) return { error: error.message }
+      // Evaluar de inmediato con la sesión recibida (no esperar solo al event)
+      await evaluate(data.session)
+      return { error: null }
+    },
+    [evaluate],
+  )
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
-  }, [])
+    await evaluate(null)
+  }, [evaluate])
 
   const value = useMemo<AuthContextValue>(
     () => ({

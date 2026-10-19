@@ -179,18 +179,38 @@ async function handleApply(opts: {
   const vendorUrl = String(app.vendor_sync_url)
   let panelVersion = Number(app.panel_version ?? 0) + 1
 
+  const allowedStatus = new Set(['active', 'past_due', 'suspended', 'cancelled'])
+  const dateRe = /^\d{4}-\d{2}-\d{2}$/
+
+  if (!body.status || !allowedStatus.has(body.status)) {
+    return json({ ok: false, code: 'invalid_status' }, 400, headers)
+  }
+  if (!body.current_period_end || !dateRe.test(body.current_period_end)) {
+    return json({ ok: false, code: 'invalid_period_end' }, 400, headers)
+  }
+  if (
+    body.grace_until != null &&
+    body.grace_until !== '' &&
+    !dateRe.test(body.grace_until)
+  ) {
+    return json({ ok: false, code: 'invalid_grace_until' }, 400, headers)
+  }
+
+  // Si el cliente no manda enforcement, conservar el valor actual de la app
+  // (no apagarlo por omisión).
+  const enforcement =
+    typeof body.enforcement_enabled === 'boolean'
+      ? body.enforcement_enabled
+      : Boolean(app.cached_enforcement_enabled)
+
   const applyBody = {
     tenant_id: tenantId,
     status: body.status,
     current_period_end: body.current_period_end,
     grace_until: body.grace_until ?? null,
-    enforcement_enabled: body.enforcement_enabled ?? false,
+    enforcement_enabled: enforcement,
     message: body.message ?? null,
     panel_version: panelVersion,
-  }
-
-  if (!applyBody.status || !applyBody.current_period_end) {
-    return json({ ok: false, code: 'validation_error' }, 400, headers)
   }
 
   let result = await vendorPost(vendorUrl, secret, applyBody)

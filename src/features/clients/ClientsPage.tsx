@@ -36,6 +36,7 @@ import {
   desarrolladorLabel,
   type Desarrollador,
 } from '@/lib/desarrolladores'
+import { useAuth } from '@/features/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import type { Client } from '@/types/database'
 
@@ -54,8 +55,11 @@ export function ClientsPage() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
 
+  const { gate, isOwner } = useAuth()
   const clients = useQuery({
     queryKey: ['clients'],
+    enabled: gate === 'ready' && isOwner,
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase.from('clients').select('*').order('nombre')
       if (error) throw error
@@ -153,6 +157,8 @@ export function ClientsPage() {
 
       {clients.isLoading ? (
         <Skeleton className="h-40" />
+      ) : clients.isError ? (
+        <p className="text-sm text-destructive">{(clients.error as Error).message}</p>
       ) : (
         <Table>
           <TableHeader>

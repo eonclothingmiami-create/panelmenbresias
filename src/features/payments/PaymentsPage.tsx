@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useAuth } from '@/features/auth/AuthProvider'
 import { formatCop, formatDateOnly } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 
@@ -26,8 +27,11 @@ interface PaymentRow {
 }
 
 export function PaymentsPage() {
+  const { gate, isOwner } = useAuth()
   const payments = useQuery({
     queryKey: ['payments-all'],
+    enabled: gate === 'ready' && isOwner,
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
@@ -96,6 +100,8 @@ export function PaymentsPage() {
 
       {payments.isLoading ? (
         <Skeleton className="h-40" />
+      ) : payments.isError ? (
+        <p className="text-sm text-destructive">{(payments.error as Error).message}</p>
       ) : (
         <Table>
           <TableHeader>

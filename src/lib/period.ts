@@ -45,6 +45,20 @@ export function addMonthsKeepingDueDay(
   return cursor
 }
 
+/**
+ * Próximo period_end al registrar un pago.
+ * Parte de max(último_vencimiento, hoy) para no dejar vencido a quien paga tarde.
+ */
+export function renewPeriodEnd(
+  lastPeriodEnd: string | null | undefined,
+  diaVencimiento: number,
+  todayIso: string,
+): string {
+  const last = lastPeriodEnd && /^\d{4}-\d{2}-\d{2}$/.test(lastPeriodEnd) ? lastPeriodEnd : todayIso
+  const base = last >= todayIso ? last : todayIso
+  return addMonthsKeepingDueDay(base, diaVencimiento, 1)
+}
+
 function clampDay(year: number, monthIndex: number, day: number): number {
   const last = lastDayOfMonth(year, monthIndex)
   return Math.min(day, last)

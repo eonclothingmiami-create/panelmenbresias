@@ -1,12 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useAuth } from '@/features/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { applyAppState, syncAppStatus } from '@/lib/panel-api'
 import type { AppWithClient } from '@/types/database'
 
 export function useApps() {
+  const { gate, isOwner } = useAuth()
   return useQuery({
     queryKey: ['apps'],
+    enabled: gate === 'ready' && isOwner,
+    staleTime: 30_000,
     queryFn: async (): Promise<AppWithClient[]> => {
       const { data, error } = await supabase
         .from('apps')
@@ -19,9 +23,11 @@ export function useApps() {
 }
 
 export function useApp(appId: string | undefined) {
+  const { gate, isOwner } = useAuth()
   return useQuery({
     queryKey: ['apps', appId],
-    enabled: Boolean(appId),
+    enabled: gate === 'ready' && isOwner && Boolean(appId),
+    staleTime: 30_000,
     queryFn: async (): Promise<AppWithClient> => {
       const { data, error } = await supabase
         .from('apps')

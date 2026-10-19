@@ -12,8 +12,13 @@ export function DashboardPage() {
   const syncAll = useSyncAll()
 
   const activeApps = apps?.filter((a) => a.activa_en_panel) ?? []
-  const monthlyTotal = activeApps.reduce((sum, a) => sum + a.precio_mensual_cop, 0)
-  const dueThisWeek = activeApps.filter(isDueThisWeek)
+  // Total facturable: excluye suspendidas/canceladas (aunque sigan en el panel)
+  const billableApps = activeApps.filter((a) => {
+    const status = (a.cached_effective_status ?? a.cached_status ?? '').toLowerCase()
+    return status !== 'suspended' && status !== 'cancelled'
+  })
+  const monthlyTotal = billableApps.reduce((sum, a) => sum + a.precio_mensual_cop, 0)
+  const dueThisWeek = billableApps.filter(isDueThisWeek)
   const offline = activeApps.filter((a) => mapAppToSemaphore(a) === 'offline')
 
   return (

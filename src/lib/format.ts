@@ -14,6 +14,65 @@ export function formatCop(value: number): string {
   return cop.format(value)
 }
 
+/** Miles con punto (es-CO), sin símbolo de moneda — para inputs. */
+export function formatMilesCop(value: number): string {
+  return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(value)
+}
+
+/** Slug kebab-case a partir del nombre de la app. */
+export function slugifyAppName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-')
+    .slice(0, 48)
+}
+
+export function slugToSecretName(slug: string): string {
+  const clean = slug.replace(/-/g, '_').toUpperCase().replace(/[^A-Z0-9_]/g, '')
+  return clean ? `APP_SECRET_${clean}` : ''
+}
+
+/**
+ * Parsea monto COP desde input humano.
+ * Acepta "150000", "150.000" (miles CO) o "150,000".
+ * Rechaza vacíos, 0, negativos y decimales.
+ */
+export function parseMontoCop(raw: string): number | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  // Si hay coma y punto, asume formato CO: 1.150.000,50 → no permitido (enteros)
+  if (trimmed.includes(',') && trimmed.includes('.')) {
+    const normalized = trimmed.replace(/\./g, '').replace(/,/g, '.')
+    if (!/^\d+(\.\d+)?$/.test(normalized)) return null
+    if (normalized.includes('.')) return null
+    const n = Number(normalized)
+    return Number.isInteger(n) && n > 0 ? n : null
+  }
+  if (trimmed.includes(',')) {
+    // "150,000" miles US o "150,5" decimal → solo enteros sin parte decimal
+    if (/^\d{1,3}(,\d{3})+$/.test(trimmed)) {
+      const n = Number(trimmed.replace(/,/g, ''))
+      return Number.isInteger(n) && n > 0 ? n : null
+    }
+    return null
+  }
+  if (trimmed.includes('.')) {
+    // "150.000" miles CO, o "150.5" decimal (rechazar)
+    if (/^\d{1,3}(\.\d{3})+$/.test(trimmed)) {
+      const n = Number(trimmed.replace(/\./g, ''))
+      return Number.isInteger(n) && n > 0 ? n : null
+    }
+    return null
+  }
+  if (!/^\d+$/.test(trimmed)) return null
+  const n = Number(trimmed)
+  return Number.isInteger(n) && n > 0 ? n : null
+}
+
 export function formatBogotaDate(
   value: string | Date | null | undefined,
   pattern = 'd MMM yyyy',
