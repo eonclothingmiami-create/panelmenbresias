@@ -51,10 +51,18 @@ export function useSyncAll() {
       return results
     },
     onSuccess: (results) => {
-      const failed = results.filter((r) => !r.result.ok).length
-      const ok = results.length - failed
-      if (failed === 0) toast.success(`Sincronizadas ${ok} apps`)
-      else toast.warning(`${ok} ok · ${failed} con error`)
+      const failed = results.filter((r) => !r.result.ok)
+      const ok = results.length - failed.length
+      if (failed.length === 0) {
+        toast.success(`Sincronizadas ${ok} apps`)
+      } else {
+        const code = failed[0]?.result.code ?? 'error'
+        const hint =
+          code === 'unauthorized'
+            ? 'Sesión vencida — Salir y vuelve a entrar'
+            : code
+        toast.warning(`${ok} ok · ${failed.length} con error (${hint})`)
+      }
       void qc.invalidateQueries({ queryKey: ['apps'] })
     },
     onError: (err: Error) => toast.error(err.message),
@@ -67,7 +75,9 @@ export function useSyncOne() {
     mutationFn: (appId: string) => syncAppStatus(appId),
     onSuccess: (res, appId) => {
       if (res.ok) toast.success('Estado actualizado')
-      else toast.error(res.code ?? 'Error al sincronizar')
+      else if (res.code === 'unauthorized') {
+        toast.error('Sesión vencida — Salir y vuelve a entrar')
+      } else toast.error(res.code ?? 'Error al sincronizar')
       void qc.invalidateQueries({ queryKey: ['apps'] })
       void qc.invalidateQueries({ queryKey: ['apps', appId] })
       void qc.invalidateQueries({ queryKey: ['audit', appId] })

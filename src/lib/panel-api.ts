@@ -1,11 +1,47 @@
 import { panelAnonKey, panelProxyUrl, supabase } from '@/lib/supabase'
 import type { PanelProxyResponse, VendorSyncState } from '@/types/database'
 
+/** JWT fresco: getSession puede devolver access_token vencido y el proxy responde 401. */
 async function authHeader(): Promise<string> {
+  const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
+  if (!refreshError && refreshed.session?.access_token) {
+    return `Bearer ${refreshed.session.access_token}`
+  }
+
   const { data } = await supabase.auth.getSession()
   const token = data.session?.access_token
-  if (!token) throw new Error('Sin sesión')
+  if (!token) {
+    throw new Error('Sesión vencida — cierra sesión y vuelve a entrar')
+  }
   return `Bearer ${token}`
+}
+
+function normalizeProxyResponse(
+  res: Response,
+  json: PanelProxyResponse,
+): PanelProxyResponse {
+  if (res.ok && json.ok) return json
+
+  if (res.status === 401) {
+    return {
+      ok: false,
+      code: 'unauthorized',
+      message:
+        typeof (json as { message?: string }).message === 'string'
+          ? (json as { message: string }).message
+          : 'Sesión inválida o vencida — cierra sesión y vuelve a entrar',
+    }
+  }
+
+  if (!json.ok || !json.code) {
+    const code =
+      typeof json.code === 'string' && json.code
+        ? json.code
+        : `http_${res.status}`
+    return { ...json, ok: false, code }
+  }
+
+  return { ...json, ok: false }
 }
 
 export async function callPanelProxy(
@@ -28,10 +64,7 @@ export async function callPanelProxy(
     json = { ok: false, code: 'invalid_json' }
   }
 
-  if (!res.ok && !json.code) {
-    json = { ...json, ok: false, code: `http_${res.status}` }
-  }
-  return json
+  return normalizeProxyResponse(res, json)
 }
 
 export async function syncAppStatus(appId: string): Promise<PanelProxyResponse> {
